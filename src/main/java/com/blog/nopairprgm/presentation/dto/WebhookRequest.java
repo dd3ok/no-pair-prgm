@@ -1,6 +1,8 @@
 package com.blog.nopairprgm.presentation.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Getter;
 
 @Getter
@@ -44,27 +46,22 @@ public class WebhookRequest {
             this.head = head;
         }
     }
-
     @Getter
-    public static class RepositoryPayload {
-        private final String fullName;
-
-        public RepositoryPayload(
-                @JsonProperty("full_name") String fullName
-        ) {
-            this.fullName = fullName;
-        }
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    public static class UserPayload {
+        private Long id;
+        private String login;
+        private String nodeId;
+        private String avatarUrl;
     }
 
     @Getter
-    public static class UserPayload {
-        private final String login;
-
-        public UserPayload(
-                @JsonProperty("login") String login
-        ) {
-            this.login = login;
-        }
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+    public static class RepositoryPayload {
+        private Long id;
+        private String name;
+        private String fullName;
+        private UserPayload owner;
     }
 
     @Getter
