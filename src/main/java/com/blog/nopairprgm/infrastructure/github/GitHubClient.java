@@ -25,6 +25,7 @@ public class GitHubClient {
         log.info("Full URL: {}", url);
         log.info("Token (first 10 chars): {}", properties.getApiToken().substring(0, 10));
 
+        // 로그추가
         try {
             return restClient.get()
                     .uri(url)
