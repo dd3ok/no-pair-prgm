@@ -17,7 +17,7 @@ public class GitHubClient {
     private final GitHubProperties properties;
     private final RestClient restClient;
 
-    public List<PullRequestFiles> getPullRequestFiles(String repository, Long prNumber) {
+    public List<PullRequestFiles> getPullRequestFiles(String repository, Integer prNumber) {
         String url = String.format("%s/repos/%s/pulls/%d/files",
                 properties.getApiUrl(), repository, prNumber);
 

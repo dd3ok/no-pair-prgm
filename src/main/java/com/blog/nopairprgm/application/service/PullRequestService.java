@@ -46,7 +46,7 @@ public class PullRequestService {
         );
 
         pullRequestRepository.save(pullRequest);
-        processCodeReview(pullRequest.getId());
+        processCodeReview(pullRequest);
     }
 
     @Transactional
@@ -56,7 +56,7 @@ public class PullRequestService {
 
         List<PullRequestFiles> files = githubClient.getPullRequestFiles(
                 pullRequest.getRepositoryName(),
-                pullRequest.getGithubPrId()
+                pullRequest.getNumber()
         );
 
         files.forEach(file -> {
@@ -72,25 +72,22 @@ public class PullRequestService {
     }
 
     @Transactional
-    public void processCodeReview(Long pullRequestId) {
-        PullRequest pullRequest = pullRequestRepository.findById(pullRequestId)
-                .orElseThrow(() -> new IllegalArgumentException("Pull request not found: " + pullRequestId));
-
+    public void processCodeReview(PullRequest pr) {
         try {
             // 1. 코드 변경사항 분석
-            analyzeCode(pullRequestId);
+            analyzeCode(pr.getId());
 
             // 2. 각 변경사항에 대한 리뷰 생성
-            List<PullRequestChange> changes = changeRepository.findByPullRequestId(pullRequestId);
+            List<PullRequestChange> changes = changeRepository.findByPullRequestId(pr.getId());
             String commitId = githubClient.getLatestCommitId(
-                    pullRequest.getRepositoryName(),
-                    pullRequest.getGithubPrId()
+                    pr.getRepositoryName(),
+                    pr.getGithubPrId()
             );
 
             changes.forEach(change -> {
                 if (shouldReview(change)) {
-                    CodeReview review = codeReviewService.reviewCode(pullRequest, change);
-                    createReviewComment(pullRequest, change, review, commitId);
+                    CodeReview review = codeReviewService.reviewCode(pr, change);
+                    createReviewComment(pr, change, review, commitId);
                 }
             });
 
@@ -98,7 +95,7 @@ public class PullRequestService {
             reviewCommentService.publishPendingComments();
 
         } catch (Exception e) {
-            log.error("Error processing code review for PR {}: {}", pullRequestId, e.getMessage(), e);
+            log.error("Error processing code review for PR {}: {}", pr.getId(), e.getMessage(), e);
             throw new RuntimeException("Failed to process code review", e);
         }
     }
