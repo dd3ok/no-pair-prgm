@@ -25,7 +25,7 @@ public class PullRequestChange {
     private Integer additions;
     private Integer deletions;
 
-    @OneToMany(mappedBy = "change")
+    @OneToMany(mappedBy = "pullRequestChange")
     private List<CodeReview> reviews = new ArrayList<>();
     
     public static PullRequestChange create(

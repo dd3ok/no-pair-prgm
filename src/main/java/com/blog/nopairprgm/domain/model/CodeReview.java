@@ -13,21 +13,18 @@ import java.util.List;
 @Table(name = "code_reviews")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CodeReview {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private PullRequest pullRequest;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private PullRequestChange change;
+    private PullRequestChange pullRequestChange;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "LONGTEXT")
     private String reviewContent;
-    private LocalDateTime createdAt;
-
-    @OneToMany(mappedBy = "codeReview")
-    private List<ReviewComment> comments = new ArrayList<>();
 
     public static CodeReview create(
             PullRequest pullRequest,
@@ -36,9 +33,8 @@ public class CodeReview {
     ) {
         CodeReview review = new CodeReview();
         review.pullRequest = pullRequest;
-        review.change = change;
+        review.pullRequestChange = change;
         review.reviewContent = reviewContent;
-        review.createdAt = LocalDateTime.now();
         return review;
     }
 }

@@ -2,7 +2,6 @@ package com.blog.nopairprgm.presentation.controller;
 
 import com.blog.nopairprgm.application.service.PullRequestService;
 import com.blog.nopairprgm.presentation.dto.WebhookRequest;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -19,28 +18,17 @@ public class WebhookController {
     private final PullRequestService pullRequestService;
 
     @PostMapping("/api/webhook/github")
-    public ResponseEntity<Void> handlePullRequestWebhook(@RequestBody String rawPayload) {
-        log.info("Received webhook payload: {}", rawPayload);
+    public ResponseEntity<Void> handlePullRequestWebhook(@RequestBody WebhookRequest request) {
+        log.info("=== Webhook Received ===");
+        log.info("Action: {}", request.getAction());
+        log.info("PR ID: {}", request.getPullRequest().getId());
+        log.info("PR Number: {}", request.getPullRequest().getNumber());
+        log.info("Repository: {}", request.getRepository().getFullName());
+        log.info("=======================");
 
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            WebhookRequest request = mapper.readValue(rawPayload, WebhookRequest.class);
-
-            if (Arrays.asList("opened", "reopened").contains(request.getAction())) {
-                log.info("Processing PR: ID={}, Action={}",
-                        request.getPullRequest().getId(),
-                        request.getAction());
-                pullRequestService.processPullRequest(request);
-            } else {
-                log.info("Skipping webhook: action={}", request.getAction());
-            }
-
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            log.error("Error processing webhook: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
+        if (Arrays.asList("opened", "reopened", "synchronize").contains(request.getAction())) {
+            pullRequestService.processPullRequest(request);
         }
+        return ResponseEntity.ok().build();
     }
-
-
 }

@@ -5,31 +5,68 @@ import com.blog.nopairprgm.domain.model.ReviewComment;
 import com.blog.nopairprgm.domain.repository.ReviewCommentRepository;
 import com.blog.nopairprgm.infrastructure.github.GitHubClient;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ReviewCommentService {
     private final ReviewCommentRepository reviewCommentRepository;
     private final GitHubClient githubClient;
 
-    @Transactional
     public void createComment(
             CodeReview review,
             String path,
-            Integer position,
+            Integer line,
             String content,
             String commitId
     ) {
-        ReviewComment comment = ReviewComment.create(
-                review,
-                path,
-                position,
-                content,
-                commitId
-        );
-        reviewCommentRepository.save(comment);
+        try {
+            // 리뷰 생성 시 코멘트 내용도 함께 전달
+            Integer reviewId = githubClient.createReview(
+                    review.getPullRequest().getRepositoryName(),
+                    review.getPullRequest().getGithubPrNumber(),
+                    commitId,
+                    formatComment(content)  // 코멘트 내용을 리뷰 본문으로 사용
+            );
+
+            githubClient.createReviewComment(
+                    review.getPullRequest().getRepositoryName(),
+                    review.getPullRequest().getGithubPrNumber(),
+                    reviewId,
+                    commitId,
+                    path,
+                    formatComment(content),
+                    line
+            );
+
+            log.info("Successfully created review comment");
+        } catch (Exception e) {
+            log.error("Failed to create review comment: {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    private int calculatePosition(String patch, Integer position) {
+        if (position != null && position > 0) {
+            return position;
+        }
+
+        // patch로부터 position 계산
+        if (patch != null && !patch.trim().isEmpty()) {
+            String[] lines = patch.split("\n");
+            int lineCount = 0;
+            for (String line : lines) {
+                if (!line.startsWith("-")) {  // 삭제된 라인은 제외
+                    lineCount++;
+                }
+            }
+            return Math.max(1, lineCount);  // 최소 1
+        }
+
+        return 1;  // 기본값
     }
 
     @Transactional
@@ -39,21 +76,34 @@ public class ReviewCommentService {
     }
 
     private void publishComment(ReviewComment comment) {
-        CodeReview review = comment.getCodeReview();
-        String repository = review.getPullRequest().getRepositoryName();
-        Long prNumber = review.getPullRequest().getGithubPrId();
+        try {
+            CodeReview review = comment.getCodeReview();
+            String repository = review.getPullRequest().getRepositoryName();
+            Integer prNumber = review.getPullRequest().getGithubPrNumber();
 
-        githubClient.createReviewComment(
-                repository,
-                prNumber,
-                comment.getCommitId(),
-                comment.getPath(),
-                comment.getPosition(),
-                formatComment(comment.getContent())
-        );
+            Integer reviewId = githubClient.createReview(
+                    repository,
+                    prNumber,
+                    comment.getCommitId(),
+                    formatComment(comment.getContent())  // 코멘트 내용을 리뷰 본문으로 사용
+            );
 
-        comment.markAsPublished();
-        reviewCommentRepository.save(comment);
+            githubClient.createReviewComment(
+                    repository,
+                    prNumber,
+                    reviewId,
+                    comment.getCommitId(),
+                    comment.getPath(),
+                    formatComment(comment.getContent()),
+                    comment.getLine()
+            );
+
+            comment.markAsPublished();
+            reviewCommentRepository.save(comment);
+        } catch (Exception e) {
+            log.error("Failed to publish comment: {}", e.getMessage());
+            throw new RuntimeException("Failed to publish comment", e);
+        }
     }
 
     private String formatComment(String content) {

@@ -40,7 +40,9 @@ public class GeminiClient {
     }
 
     private String callGeminiApi(String prompt) {
-        String url = properties.getApiUrl() + "/generateContent";
+        String url = String.format("%s?key=%s",
+                properties.getApiUrl(),
+                properties.getApiKey());
 
         Map<String, Object> request = Map.of(
                 "contents", List.of(Map.of("parts", List.of(Map.of("text", prompt)))),
@@ -50,16 +52,24 @@ public class GeminiClient {
                 )
         );
 
-        GeminiResponse response = restClient.post()
-                .uri(url)
-                .header("Authorization", "Bearer " + properties.getApiKey())
-                .body(request)
-                .retrieve()
-                .body(GeminiResponse.class);
+        try {
+            log.info("Sending request to Gemini API");
+            GeminiResponse response = restClient.post()
+                    .uri(url)
+                    .body(request)
+                    .retrieve()
+                    .body(GeminiResponse.class);
 
-        return Optional.ofNullable(response)
-                .map(GeminiResponse::getContent)
-                .orElseThrow(() -> new RuntimeException("Failed to get response from Gemini API"));
+            log.info("Successfully received response from Gemini");
+
+            return Optional.ofNullable(response)
+                    .map(GeminiResponse::getContent)
+                    .orElseThrow(() -> new RuntimeException("Failed to get response from Gemini API"));
+        } catch (RuntimeException e) {
+            log.error("Failed to generate review - Error: {}", e.getMessage());
+            log.error("Request body: {}", request);
+            throw new RuntimeException("Failed to generate review", e);
+        }
     }
 
     private String createReviewPrompt(String codeContent) {

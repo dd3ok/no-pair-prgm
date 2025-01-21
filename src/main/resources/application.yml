@@ -10,7 +10,7 @@ spring:
       read-timeout: 30000     # 30초
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     properties:
       hibernate:
         show_sql: true
@@ -27,16 +27,16 @@ server:
 
 logging:
   level:
-    com.nopair: DEBUG
+    com.nopairprgm: info
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
 gemini:
   api-key: "AIzaSyCt7NJZegCLTrJHFPcEe8qOUXqXdvp83b4"
-  api-url: "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash"
+  api-url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
   max-tokens: 1000
 
 github:
-  api-token: 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
+  api-token: "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"
 #  webhook-secret:
   api-url: "https://api.github.com"

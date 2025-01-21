@@ -30,8 +30,10 @@ public class PullRequestService {
     public void processPullRequest(WebhookRequest webhook) {
         WebhookRequest.PullRequestPayload pr = webhook.getPullRequest();
 
-        if (pullRequestRepository.existsByGithubPrId(pr.getId())) {
-            log.info("Pull request {} already exists", pr.getId());
+        log.info("Processing PR - ID: {}, Number: {}", pr.getId(), pr.getNumber());
+
+        if (pullRequestRepository.existsByGithubPrNumber(pr.getNumber())) {
+            log.info("Pull request number {} already exists", pr.getNumber());
             return;
         }
 
@@ -49,14 +51,21 @@ public class PullRequestService {
         processCodeReview(pullRequest);
     }
 
+
     @Transactional
     public void analyzeCode(Long pullRequestId) {
         PullRequest pullRequest = pullRequestRepository.findById(pullRequestId)
                 .orElseThrow(() -> new IllegalArgumentException("Pull request not found: " + pullRequestId));
 
+        log.info("Analyzing PR - ID: {}, Number: {}, Repository: {}",
+                pullRequestId,
+                pullRequest.getGithubPrNumber(),
+                pullRequest.getRepositoryName()
+        );
+
         List<PullRequestFiles> files = githubClient.getPullRequestFiles(
                 pullRequest.getRepositoryName(),
-                pullRequest.getNumber()
+                pullRequest.getGithubPrNumber()
         );
 
         files.forEach(file -> {
@@ -81,7 +90,7 @@ public class PullRequestService {
             List<PullRequestChange> changes = changeRepository.findByPullRequestId(pr.getId());
             String commitId = githubClient.getLatestCommitId(
                     pr.getRepositoryName(),
-                    pr.getGithubPrId()
+                    pr.getGithubPrNumber()  // githubPrId -> githubPrNumber로 변경
             );
 
             changes.forEach(change -> {
@@ -95,10 +104,12 @@ public class PullRequestService {
             reviewCommentService.publishPendingComments();
 
         } catch (Exception e) {
-            log.error("Error processing code review for PR {}: {}", pr.getId(), e.getMessage(), e);
+            log.error("Error processing code review for PR {}: {}",
+                    pr.getGithubPrNumber(), e.getMessage(), e);  // githubPrId -> githubPrNumber로 변경
             throw new RuntimeException("Failed to process code review", e);
         }
     }
+
 
     private boolean shouldReview(PullRequestChange change) {
         // 리뷰가 필요한 파일인지 확인

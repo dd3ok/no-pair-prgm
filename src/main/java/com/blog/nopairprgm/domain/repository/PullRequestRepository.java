@@ -7,5 +7,6 @@ import java.util.Optional;
 
 public interface PullRequestRepository extends JpaRepository<PullRequest, Long> {
     boolean existsByGithubPrId(Long githubPrId);
+    boolean existsByGithubPrNumber(Integer githubPrNumber);
     Optional<PullRequest> findByGithubPrId(Long githubPrId);
 }

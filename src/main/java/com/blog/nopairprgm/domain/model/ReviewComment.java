@@ -18,28 +18,30 @@ public class ReviewComment {
     private CodeReview codeReview;
 
     private String path;
-    private Integer position;
+    private Integer line;  // position 대신 line 필드 사용
     @Column(columnDefinition = "TEXT")
     private String content;
     private String commitId;
     private LocalDateTime createdAt;
     private boolean published;
+    private String patch;
+    private String diffHunk;
 
     public static ReviewComment create(
-            CodeReview codeReview,
+            CodeReview review,
+            String commitId,
             String path,
-            Integer position,
+            Integer line,
             String content,
-            String commitId
+            String diffHunk
     ) {
         ReviewComment comment = new ReviewComment();
-        comment.codeReview = codeReview;
-        comment.path = path;
-        comment.position = position;
-        comment.content = content;
+        comment.codeReview = review;
         comment.commitId = commitId;
-        comment.createdAt = LocalDateTime.now();
-        comment.published = false;
+        comment.path = path;
+        comment.line = line;
+        comment.content = content;
+        comment.diffHunk = diffHunk;
         return comment;
     }
 
