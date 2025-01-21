@@ -132,6 +132,4 @@ public class GeminiClient {
                     .orElse("");
         }
     }
-    
-    // 주석추가 테스트
 }
