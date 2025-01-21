@@ -1,0 +1,9 @@
+### Get PR Files
+GET https://api.github.com/repos/dd3ok/no-pair-prgm/pulls/8/files
+Accept: application/vnd.github.v3+json
+Authorization: Bearer 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
+
+### Get PR Details
+GET https://api.github.com/repos/dd3ok/no-pair-prgm/pulls/8
+Accept: application/vnd.github.v3+json
+Authorization: Bearer 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
