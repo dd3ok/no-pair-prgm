@@ -22,7 +22,7 @@ public class PullRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    private Integer number;
     private Long githubPrId;
     private String repositoryName;
     private String title;
@@ -40,7 +40,8 @@ public class PullRequest {
             String title,
             String author,
             String baseBranch,
-            String headBranch
+            String headBranch,
+            Integer number
     ) {
         PullRequest pr = new PullRequest();
         pr.githubPrId = githubPrId;
@@ -50,6 +51,7 @@ public class PullRequest {
         pr.baseBranch = baseBranch;
         pr.headBranch = headBranch;
         pr.createdAt = LocalDateTime.now();
+        pr.number = number;
         return pr;
     }
 }

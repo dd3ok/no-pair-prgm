@@ -22,6 +22,7 @@ public class WebhookRequest {
     @Getter
     public static class PullRequestPayload {
         private final Long id;
+        private final Integer number;
         private final String title;
         private final UserPayload user;
         private final BranchPayload base;
@@ -29,12 +30,14 @@ public class WebhookRequest {
 
         public PullRequestPayload(
                 @JsonProperty("id") Long id,
+                @JsonProperty("number") Integer number,
                 @JsonProperty("title") String title,
                 @JsonProperty("user") UserPayload user,
                 @JsonProperty("base") BranchPayload base,
                 @JsonProperty("head") BranchPayload head
         ) {
             this.id = id;
+            this.number = number;
             this.title = title;
             this.user = user;
             this.base = base;

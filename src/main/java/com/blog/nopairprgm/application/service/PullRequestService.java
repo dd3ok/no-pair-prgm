@@ -41,7 +41,8 @@ public class PullRequestService {
                 pr.getTitle(),
                 pr.getUser().getLogin(),
                 pr.getBase().getRef(),
-                pr.getHead().getRef()
+                pr.getHead().getRef(),
+                pr.getNumber()
         );
 
         pullRequestRepository.save(pullRequest);
