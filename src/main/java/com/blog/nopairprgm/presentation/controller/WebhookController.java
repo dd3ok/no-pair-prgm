@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Arrays;
+
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -24,7 +26,7 @@ public class WebhookController {
             ObjectMapper mapper = new ObjectMapper();
             WebhookRequest request = mapper.readValue(rawPayload, WebhookRequest.class);
 
-            if (request.getPullRequest() != null && "opened".equals(request.getAction())) {
+            if (Arrays.asList("opened", "reopened").contains(request.getAction())) {
                 log.info("Processing PR: ID={}, Action={}",
                         request.getPullRequest().getId(),
                         request.getAction());
