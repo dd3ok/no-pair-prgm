@@ -19,7 +19,6 @@ public class WebhookController {
             pullRequestService.processPullRequest(request);
         }
         // 진입 테스트
-        // 주석 추가
         String string = "";
         return ResponseEntity.ok().build();
     }
