@@ -74,18 +74,26 @@ public class GeminiClient {
 
     private String createReviewPrompt(String codeContent) {
         return """
-                As a senior software engineer, review the following code changes and provide:
-                1. Potential bugs or issues
-                2. Code style improvements
-                3. Performance considerations
-                4. Security concerns
-                
-                Code changes:
-                %s
-                
-                Please format the response in markdown.
-                """.formatted(codeContent);
+            당신은 시니어 소프트웨어 엔지니어입니다. 다음 코드 변경사항을 리뷰하고 핵심적인 2-3가지 개선점을 제안해주세요.
+            
+            - 다음 내용을 중점적으로 봐주세요:
+            1. 잠재적인 버그나 이슈
+            2. 코드 스타일 개선점
+            3. 성능 고려사항
+            
+            응답 형식:
+            - 한국어로 작성해주세요
+            - 이모지 사용이 가능합니다
+            - 핵심적인 내용만 간단명료하게 설명해주세요
+            - 실제 코드 예시가 있으면 더 좋습니다
+            
+            코드 변경사항:
+            %s
+            
+            마크다운 형식으로 응답해주세요.
+            """.formatted(codeContent);
     }
+
 
     private String createAnalysisPrompt(String code) {
         return """
