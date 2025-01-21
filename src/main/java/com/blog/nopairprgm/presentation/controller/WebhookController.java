@@ -18,6 +18,7 @@ public class WebhookController {
         if ("opened".equals(request.getAction())) {
             pullRequestService.processPullRequest(request);
         }
+        // 진입 테스트
         return ResponseEntity.ok().build();
     }
 }
