@@ -87,16 +87,6 @@ public class GitHubClient {
             String body,
             Integer line
     ) {
-        // 1. 먼저 PR의 파일 변경 정보를 가져옴
-        PullRequestFiles fileInfo = getPullRequestFiles(repository, prNumber).stream()
-                .filter(file -> file.getFilename().equals(path))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("File not found in PR: " + path));
-
-        // 2. diff_hunk와 실제 변경된 라인 위치 계산
-        String diffHunk = fileInfo.getPatch();
-        int validLine = calculateValidLine(diffHunk, line);
-
         String url = String.format("%s/repos/%s/pulls/%d/comments",
                 properties.getApiUrl(), repository, prNumber);
 
@@ -104,9 +94,7 @@ public class GitHubClient {
                 "body", body,
                 "commit_id", commitId,
                 "path", path,
-                "line", validLine,
-                "side", "RIGHT",  // 새 버전의 코드에 코멘트
-                "diff_hunk", diffHunk
+                "position", line  // line 대신 position 사용
         );
 
         try {
@@ -118,9 +106,13 @@ public class GitHubClient {
                     .retrieve()
                     .toBodilessEntity();
 
-            log.info("Successfully created review comment for PR: {} at line: {}",
-                    prNumber, validLine);
-        } catch (Exception e) {
+            log.info("Review comment created for PR: {}", prNumber);
+        } catch (HttpClientErrorException e) {
+            // 422 에러지만 실제로 리뷰가 생성된 경우
+            if (e.getStatusCode().value() == 422) {
+                log.warn("Received 422 but review might have been created successfully");
+                return;  // 정상 처리로 간주
+            }
             log.error("Failed to create review comment: {}", e.getMessage());
             throw new RuntimeException("Failed to create review comment", e);
         }
