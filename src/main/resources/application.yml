@@ -37,6 +37,6 @@ gemini:
   max-tokens: 1000
 
 github:
-  api-token: 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
+  api-token: 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
 #  webhook-secret:
   api-url: "https://api.github.com"
