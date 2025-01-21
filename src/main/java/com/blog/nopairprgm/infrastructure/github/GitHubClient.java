@@ -21,11 +21,22 @@ public class GitHubClient {
         String url = String.format("%s/repos/%s/pulls/%d/files",
                 properties.getApiUrl(), repository, prNumber);
 
-        return restClient.get()
-                .uri(url)
-                .header("Authorization", "Bearer " + properties.getApiToken())
-                .retrieve()
-                .body(new ParameterizedTypeReference<List<PullRequestFiles>>() {});
+        log.info("GitHub API Request - Repository: {}, PR Number: {}", repository, prNumber);
+        log.info("Full URL: {}", url);
+        log.info("Token (first 10 chars): {}", properties.getApiToken().substring(0, 10));
+
+        try {
+            return restClient.get()
+                    .uri(url)
+                    .header("Authorization", "Bearer " + properties.getApiToken())
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<List<PullRequestFiles>>() {
+                    });
+        } catch (Exception e) {
+            log.error("GitHub API error for repository: {} and PR: {}", repository, prNumber);
+            log.error("Error message: {}", e.getMessage());
+            throw e;
+        }
     }
 
     public void createReviewComment(
