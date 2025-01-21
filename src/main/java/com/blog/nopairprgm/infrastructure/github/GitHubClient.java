@@ -52,15 +52,15 @@ public class GitHubClient {
 
 
     // 1. 먼저 리뷰를 생성
-    public Integer createReview(String repository, Integer prNumber, String commitId, String body) {
+    public Long createReview(String repository, Integer prNumber, String commitId, String body) {
         String url = String.format("%s/repos/%s/pulls/%d/reviews",
                 properties.getApiUrl(), repository, prNumber);
 
         Map<String, Object> request = Map.of(
                 "commit_id", commitId,
-                "body", body,      // 리뷰 본문 추가
+                "body", body,
                 "event", "COMMENT",
-                "comments", List.of()  // 빈 코멘트 리스트로 시작
+                "comments", List.of()
         );
 
         try {
@@ -72,31 +72,41 @@ public class GitHubClient {
                     .retrieve()
                     .toEntity(Map.class);
 
-            return (Integer) response.getBody().get("id");
+            return (Long) response.getBody().get("id");  // Long으로 캐스팅
         } catch (Exception e) {
             log.error("Failed to create review: {}", e.getMessage());
             throw new RuntimeException("Failed to create review", e);
         }
     }
 
-    // 2. 리뷰에 코멘트 추가
     public void createReviewComment(
             String repository,
             Integer prNumber,
-            Integer reviewId,
             String commitId,
             String path,
             String body,
             Integer line
     ) {
-        String url = String.format("%s/repos/%s/pulls/%d/reviews/%d/comments",
-                properties.getApiUrl(), repository, prNumber, reviewId);
+        // 1. 먼저 PR의 파일 변경 정보를 가져옴
+        PullRequestFiles fileInfo = getPullRequestFiles(repository, prNumber).stream()
+                .filter(file -> file.getFilename().equals(path))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("File not found in PR: " + path));
+
+        // 2. diff_hunk와 실제 변경된 라인 위치 계산
+        String diffHunk = fileInfo.getPatch();
+        int validLine = calculateValidLine(diffHunk, line);
+
+        String url = String.format("%s/repos/%s/pulls/%d/comments",
+                properties.getApiUrl(), repository, prNumber);
 
         Map<String, Object> request = Map.of(
                 "body", body,
                 "commit_id", commitId,
                 "path", path,
-                "line", line // position 대신 line 사용
+                "line", validLine,
+                "side", "RIGHT",  // 새 버전의 코드에 코멘트
+                "diff_hunk", diffHunk
         );
 
         try {
@@ -108,12 +118,40 @@ public class GitHubClient {
                     .retrieve()
                     .toBodilessEntity();
 
-            log.info("Successfully created review comment");
+            log.info("Successfully created review comment for PR: {} at line: {}",
+                    prNumber, validLine);
         } catch (Exception e) {
             log.error("Failed to create review comment: {}", e.getMessage());
             throw new RuntimeException("Failed to create review comment", e);
         }
     }
+
+    private int calculateValidLine(String diffHunk, Integer requestedLine) {
+        if (diffHunk == null || diffHunk.isEmpty()) {
+            return requestedLine;
+        }
+
+        // diff 파싱하여 실제 변경된 라인 찾기
+        String[] lines = diffHunk.split("\n");
+        int currentLine = 0;
+        int diffLine = 0;
+
+        for (String line : lines) {
+            if (line.startsWith("+") || !line.startsWith("-")) {
+                currentLine++;
+                if (currentLine == requestedLine) {
+                    return diffLine;
+                }
+            }
+            if (!line.startsWith("@@")) {
+                diffLine++;
+            }
+        }
+
+        // 요청된 라인이 diff에 없으면 마지막 변경 라인 반환
+        return diffLine;
+    }
+
 
     public String getLatestCommitId(String repository, Integer prNumber) {
         log.info("Getting latest commit for repository: {} PR: {}", repository, prNumber);

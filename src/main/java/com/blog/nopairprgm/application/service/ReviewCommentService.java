@@ -25,7 +25,7 @@ public class ReviewCommentService {
     ) {
         try {
             // 리뷰 생성 시 코멘트 내용도 함께 전달
-            Integer reviewId = githubClient.createReview(
+            Long reviewId = githubClient.createReview(
                     review.getPullRequest().getRepositoryName(),
                     review.getPullRequest().getGithubPrNumber(),
                     commitId,
@@ -35,7 +35,6 @@ public class ReviewCommentService {
             githubClient.createReviewComment(
                     review.getPullRequest().getRepositoryName(),
                     review.getPullRequest().getGithubPrNumber(),
-                    reviewId,
                     commitId,
                     path,
                     formatComment(content),
@@ -47,26 +46,6 @@ public class ReviewCommentService {
             log.error("Failed to create review comment: {}", e.getMessage());
             throw e;
         }
-    }
-
-    private int calculatePosition(String patch, Integer position) {
-        if (position != null && position > 0) {
-            return position;
-        }
-
-        // patch로부터 position 계산
-        if (patch != null && !patch.trim().isEmpty()) {
-            String[] lines = patch.split("\n");
-            int lineCount = 0;
-            for (String line : lines) {
-                if (!line.startsWith("-")) {  // 삭제된 라인은 제외
-                    lineCount++;
-                }
-            }
-            return Math.max(1, lineCount);  // 최소 1
-        }
-
-        return 1;  // 기본값
     }
 
     @Transactional
@@ -81,7 +60,7 @@ public class ReviewCommentService {
             String repository = review.getPullRequest().getRepositoryName();
             Integer prNumber = review.getPullRequest().getGithubPrNumber();
 
-            Integer reviewId = githubClient.createReview(
+            Long reviewId = githubClient.createReview(
                     repository,
                     prNumber,
                     comment.getCommitId(),
@@ -91,7 +70,6 @@ public class ReviewCommentService {
             githubClient.createReviewComment(
                     repository,
                     prNumber,
-                    reviewId,
                     comment.getCommitId(),
                     comment.getPath(),
                     formatComment(comment.getContent()),
@@ -105,6 +83,7 @@ public class ReviewCommentService {
             throw new RuntimeException("Failed to publish comment", e);
         }
     }
+
 
     private String formatComment(String content) {
         return """
