@@ -9,13 +9,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController("/api/webhook")
+@RestController
 @RequiredArgsConstructor
 @Slf4j
 public class WebhookController {
     private final PullRequestService pullRequestService;
 
-    @PostMapping("/github")
+    @PostMapping("/api/webhook/github")
     public ResponseEntity<Void> handlePullRequestWebhook(@RequestBody WebhookRequest request) {
         log.info("Received webhook - PR ID: {}, Number: {}, Action: {}",
                 request.getPullRequest().getId(),
